@@ -19,7 +19,8 @@ const labelStyle = { fontSize: 12, fontWeight: 600, color: '#555', display: 'blo
 const fieldWrap  = { marginBottom: 12 }
 
 // ── Countdown ──────────────────────────────────────────────────────────────
-function Countdown({ expiresAt }) {
+function Countdown({ expiresAt, totalMins = 20 }) {
+  const totalSecs = totalMins * 60
   const [secs, setSecs] = useState(() => Math.max(0, Math.floor((new Date(expiresAt) - Date.now()) / 1000)))
   useEffect(() => {
     if (secs <= 0) return
@@ -28,7 +29,7 @@ function Countdown({ expiresAt }) {
   }, [secs])
   const mins  = Math.floor(secs / 60)
   const ss    = String(secs % 60).padStart(2, '0')
-  const pct   = Math.max(0, (secs / 1200) * 100)
+  const pct   = Math.max(0, (secs / totalSecs) * 100)
   const color = secs > 300 ? '#16a34a' : secs > 60 ? '#d97706' : '#dc2626'
   return (
     <div style={{ textAlign: 'center' }}>
@@ -46,22 +47,33 @@ function CodesTab({ events }) {
   const { user } = useAuth()
   const [activeCodes, setCodes] = useState({})
   const [generating, setGen]    = useState(null)
+  const [minutes, setMinutes]   = useState(20)
   const today = new Date().toISOString().split('T')[0]
 
   async function generateCode(ev) {
     setGen(ev.id)
     const code      = randomCode()
-    const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString()
+    const mins      = Math.max(1, Math.min(120, Number(minutes) || 20))
+    const expiresAt = new Date(Date.now() + mins * 60 * 1000).toISOString()
     const { error } = await supabase.from('checkin_codes').insert({ event_id: ev.id, code, created_by: user.id, expires_at: expiresAt })
     setGen(null)
-    if (!error) setCodes(prev => ({ ...prev, [ev.id]: { code, expiresAt } }))
+    if (!error) setCodes(prev => ({ ...prev, [ev.id]: { code, expiresAt, mins } }))
   }
 
   return (
     <>
-      <p style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>
-        Select an event and generate a 20-minute check-in code.
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, background: '#fff', borderRadius: 12, padding: '12px 14px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <span style={{ fontSize: 13, color: '#555', fontWeight: 600, whiteSpace: 'nowrap' }}>Code duration:</span>
+        <input
+          type="number"
+          min={1}
+          max={120}
+          value={minutes}
+          onChange={e => setMinutes(e.target.value)}
+          style={{ width: 64, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', sans-serif", outline: 'none', textAlign: 'center' }}
+        />
+        <span style={{ fontSize: 13, color: '#555', fontWeight: 600 }}>minutes</span>
+      </div>
       {events.length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>No events yet.</p>}
       {events.map(ev => {
         const active    = activeCodes[ev.id]
@@ -80,7 +92,7 @@ function CodesTab({ events }) {
             </div>
             {active && !isExpired ? (
               <div style={{ background: '#f0f9ff', borderRadius: 12, padding: 14, marginBottom: 10 }}>
-                <Countdown expiresAt={active.expiresAt} />
+                <Countdown expiresAt={active.expiresAt} totalMins={active.mins ?? 20} />
                 <div
                   style={{ fontSize: 32, fontWeight: 800, letterSpacing: 8, textAlign: 'center', color: BLUE, marginTop: 14, fontFamily: 'monospace', cursor: 'pointer' }}
                   onClick={() => navigator.clipboard?.writeText(active.code)}
@@ -98,7 +110,7 @@ function CodesTab({ events }) {
               disabled={generating === ev.id || isPast}
               style={{ width: '100%', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: isPast ? 'default' : 'pointer', background: isPast ? '#f3f4f6' : BLUE, color: isPast ? '#aaa' : YELLOW }}
             >
-              {generating === ev.id ? 'Generating...' : active && !isExpired ? '🔄 Generate New Code' : isPast ? 'Past event' : '🔑 Generate Code (20 min)'}
+              {generating === ev.id ? 'Generating...' : active && !isExpired ? `🔄 Generate New Code` : isPast ? 'Past event' : `🔑 Generate Code (${minutes} min)`}
             </button>
           </div>
         )
