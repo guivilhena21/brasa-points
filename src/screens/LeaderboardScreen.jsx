@@ -60,7 +60,7 @@ export default function LeaderboardScreen() {
         <div className="podium">
           {podiumOrder.map((m, i) => {
             const actualRank = members.indexOf(m) + 1
-            const pIdx = [1, 0, 2][i] // map visual position to podium style index
+            const pIdx = i
             return (
               <div key={m.id} className="podium-item">
                 {pIdx === 1 && <span className="podium-crown">👑</span>}
