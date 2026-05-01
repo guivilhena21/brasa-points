@@ -13,6 +13,7 @@ function randomCode() {
 const inputStyle = {
   width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10,
   padding: '10px 12px', fontSize: 14, fontFamily: "'Poppins', sans-serif", outline: 'none',
+  boxSizing: 'border-box',
 }
 const labelStyle = { fontSize: 12, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }
 const fieldWrap  = { marginBottom: 12 }
@@ -106,16 +107,55 @@ function CodesTab({ events }) {
   )
 }
 
-// ── TAB: Events (edit / delete / check-in list) ───────────────────────────
+// ── Event Form (outside EventsTab to prevent remount on each keystroke) ────
+function EventForm({ form, setForm, onSubmit, onCancel, saving, error, submitLabel }) {
+  return (
+    <form onSubmit={onSubmit} style={{ marginTop: 12 }}>
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Event Name</label>
+        <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="Game Night" />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+        <div>
+          <label style={labelStyle}>Date</label>
+          <input style={inputStyle} type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required />
+        </div>
+        <div>
+          <label style={labelStyle}>Time</label>
+          <input style={inputStyle} type="text" placeholder="7:00 PM" value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} />
+        </div>
+      </div>
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Location</label>
+        <input style={inputStyle} value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} required placeholder="Student Union" />
+      </div>
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Points</label>
+        <input style={inputStyle} type="number" min={1} max={500} value={form.points} onChange={e => setForm(f => ({ ...f, points: e.target.value }))} required />
+      </div>
+      {error && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{error}</p>}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+          {saving ? 'Saving...' : submitLabel}
+        </button>
+        <button type="button" onClick={onCancel} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ── TAB: Events ────────────────────────────────────────────────────────────
 function EventsTab({ events, onRefresh }) {
-  const [editing, setEditing]     = useState(null) // event being edited
-  const [expanded, setExpanded]   = useState(null) // event showing check-ins
-  const [checkins, setCheckins]   = useState([])
-  const [loadingCI, setLoadCI]    = useState(false)
-  const [creating, setCreating]   = useState(false)
-  const [form, setForm]           = useState({ name: '', date: '', time: '', location: '', points: 50 })
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState('')
+  const [editing, setEditing]   = useState(null)
+  const [expanded, setExpanded] = useState(null)
+  const [checkins, setCheckins] = useState([])
+  const [loadingCI, setLoadCI]  = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [form, setForm]         = useState({ name: '', date: '', time: '', location: '', points: 50 })
+  const [saving, setSaving]     = useState(false)
+  const [error, setError]       = useState('')
   const { user } = useAuth()
 
   async function loadCheckins(eventId) {
@@ -165,43 +205,7 @@ function EventsTab({ events, onRefresh }) {
     onRefresh()
   }
 
-  function EventForm({ onSubmit, submitLabel }) {
-    return (
-      <form onSubmit={onSubmit} style={{ marginTop: 12 }}>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Event Name</label>
-          <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="Game Night" />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-          <div>
-            <label style={labelStyle}>Date</label>
-            <input style={inputStyle} type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required />
-          </div>
-          <div>
-            <label style={labelStyle}>Time</label>
-            <input style={inputStyle} type="text" placeholder="7:00 PM" value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} />
-          </div>
-        </div>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Location</label>
-          <input style={inputStyle} value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} required placeholder="Student Union" />
-        </div>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Points</label>
-          <input style={inputStyle} type="number" min={1} max={500} value={form.points} onChange={e => setForm(f => ({ ...f, points: e.target.value }))} required />
-        </div>
-        {error && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{error}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
-            {saving ? 'Saving...' : submitLabel}
-          </button>
-          <button type="button" onClick={() => { setEditing(null); setCreating(false) }} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
-            Cancel
-          </button>
-        </div>
-      </form>
-    )
-  }
+  function cancelForm() { setEditing(null); setCreating(false) }
 
   return (
     <>
@@ -217,7 +221,7 @@ function EventsTab({ events, onRefresh }) {
       {creating && (
         <div style={{ background: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>New Event</div>
-          <EventForm onSubmit={createEvent} submitLabel="Create Event" />
+          <EventForm form={form} setForm={setForm} onSubmit={createEvent} onCancel={cancelForm} saving={saving} error={error} submitLabel="Create Event" />
         </div>
       )}
 
@@ -228,7 +232,7 @@ function EventsTab({ events, onRefresh }) {
           {editing === ev.id ? (
             <>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#111', marginBottom: 4 }}>Editing: {ev.name}</div>
-              <EventForm onSubmit={saveEdit} submitLabel="Save Changes" />
+              <EventForm form={form} setForm={setForm} onSubmit={saveEdit} onCancel={cancelForm} saving={saving} error={error} submitLabel="Save Changes" />
             </>
           ) : (
             <>
@@ -270,6 +274,35 @@ function EventsTab({ events, onRefresh }) {
         </div>
       ))}
     </>
+  )
+}
+
+// ── Reward Form (outside RewardsTab to prevent remount on each keystroke) ──
+function RewardForm({ form, setForm, onSubmit, onCancel, saving, error, submitLabel }) {
+  return (
+    <form onSubmit={onSubmit} style={{ marginTop: 12 }}>
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Reward Name</label>
+        <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="BRASA Jersey" />
+      </div>
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Points Required</label>
+        <input style={inputStyle} type="number" min={1} value={form.points_required} onChange={e => setForm(f => ({ ...f, points_required: e.target.value }))} required />
+      </div>
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Description (optional)</label>
+        <input style={inputStyle} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Claim at next general meeting" />
+      </div>
+      {error && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{error}</p>}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+          {saving ? 'Saving...' : submitLabel}
+        </button>
+        <button type="button" onClick={onCancel} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+          Cancel
+        </button>
+      </div>
+    </form>
   )
 }
 
@@ -315,33 +348,7 @@ function RewardsTab() {
     setError('')
   }
 
-  function RewardForm({ label }) {
-    return (
-      <form onSubmit={saveReward} style={{ marginTop: 12 }}>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Reward Name</label>
-          <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="BRASA Jersey" />
-        </div>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Points Required</label>
-          <input style={inputStyle} type="number" min={1} value={form.points_required} onChange={e => setForm(f => ({ ...f, points_required: e.target.value }))} required />
-        </div>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Description (optional)</label>
-          <input style={inputStyle} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Claim at next general meeting" />
-        </div>
-        {error && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{error}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
-            {saving ? 'Saving...' : label}
-          </button>
-          <button type="button" onClick={() => { setEditing(null); setCreating(false) }} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
-            Cancel
-          </button>
-        </div>
-      </form>
-    )
-  }
+  function cancelForm() { setEditing(null); setCreating(false) }
 
   return (
     <>
@@ -357,7 +364,7 @@ function RewardsTab() {
       {creating && (
         <div style={{ background: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>New Reward</div>
-          <RewardForm label="Create Reward" />
+          <RewardForm form={form} setForm={setForm} onSubmit={saveReward} onCancel={cancelForm} saving={saving} error={error} submitLabel="Create Reward" />
         </div>
       )}
 
@@ -366,7 +373,7 @@ function RewardsTab() {
           {editing === r.id ? (
             <>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#111', marginBottom: 4 }}>Editing: {r.name}</div>
-              <RewardForm label="Save Changes" />
+              <RewardForm form={form} setForm={setForm} onSubmit={saveReward} onCancel={cancelForm} saving={saving} error={error} submitLabel="Save Changes" />
             </>
           ) : (
             <>
@@ -396,10 +403,10 @@ function RewardsTab() {
 // ── TAB: Members ───────────────────────────────────────────────────────────
 function MembersTab() {
   const { user } = useAuth()
-  const [members, setMembers]   = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [editPts, setEditPts]   = useState(null) // { id, value }
-  const [saving, setSaving]     = useState(false)
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editPts, setEditPts] = useState(null)
+  const [saving, setSaving]   = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -414,16 +421,16 @@ function MembersTab() {
   useEffect(() => { load() }, [load])
 
   async function toggleAdmin(member) {
-    if (member.id === user.id) return // can't demote yourself
-    await supabase.from('profiles').update({ is_admin: !member.is_admin }).eq('id', member.id)
-    load()
+    if (member.id === user.id) return
+    const { error } = await supabase.rpc('toggle_admin', { target_id: member.id })
+    if (!error) load()
   }
 
   async function savePoints(member) {
     const pts = Number(editPts.value)
     if (isNaN(pts) || pts < 0) return
     setSaving(true)
-    await supabase.from('profiles').update({ total_points: pts }).eq('id', member.id)
+    await supabase.rpc('set_member_points', { target_id: member.id, new_points: pts })
     setSaving(false)
     setEditPts(null)
     load()
@@ -494,7 +501,7 @@ function MembersTab() {
 
 // ── Main Admin Screen ──────────────────────────────────────────────────────
 export default function AdminScreen() {
-  const [view, setView]   = useState('codes')
+  const [view, setView]     = useState('codes')
   const [events, setEvents] = useState([])
 
   const loadEvents = useCallback(async () => {
