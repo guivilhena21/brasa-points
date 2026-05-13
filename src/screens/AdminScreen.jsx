@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
-const BLUE   = '#0F2D5E'
-const YELLOW = '#F5C800'
+const BLUE   = '#010077'
+const YELLOW = '#F5BD2C'
 
 function randomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -12,7 +12,7 @@ function randomCode() {
 
 const inputStyle = {
   width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10,
-  padding: '10px 12px', fontSize: 14, fontFamily: "'Poppins', sans-serif", outline: 'none',
+  padding: '10px 12px', fontSize: 14, fontFamily: "'Poppins', system-ui, sans-serif", outline: 'none',
   boxSizing: 'border-box',
 }
 const labelStyle = { fontSize: 12, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }
@@ -70,7 +70,7 @@ function CodesTab({ events }) {
           max={120}
           value={minutes}
           onChange={e => setMinutes(e.target.value)}
-          style={{ width: 64, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', sans-serif", outline: 'none', textAlign: 'center' }}
+          style={{ width: 64, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", outline: 'none', textAlign: 'center' }}
         />
         <span style={{ fontSize: 13, color: '#555', fontWeight: 600 }}>minutes</span>
       </div>
@@ -84,11 +84,11 @@ function CodesTab({ events }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{ev.name}</div>
-                <div style={{ fontSize: 12, color: '#888' }}>
+                <div style={{ fontSize: 12, color: '#888', fontFamily: 'system-ui, sans-serif' }}>
                   {new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US')}{ev.time ? ` · ${ev.time}` : ''} · {ev.points} pts
                 </div>
               </div>
-              <div style={{ fontSize: 12, color: '#888' }}>{ev.checkins?.[0]?.count ?? 0} check-ins</div>
+              <div style={{ fontSize: 12, color: '#888', fontFamily: 'system-ui, sans-serif' }}>{ev.checkins?.[0]?.count ?? 0} check-ins</div>
             </div>
             {active && !isExpired ? (
               <div style={{ background: '#f0f9ff', borderRadius: 12, padding: 14, marginBottom: 10 }}>
@@ -108,7 +108,7 @@ function CodesTab({ events }) {
             <button
               onClick={() => generateCode(ev)}
               disabled={generating === ev.id || isPast}
-              style={{ width: '100%', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: isPast ? 'default' : 'pointer', background: isPast ? '#f3f4f6' : BLUE, color: isPast ? '#aaa' : YELLOW }}
+              style={{ width: '100%', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, fontFamily: 'system-ui, sans-serif', cursor: isPast ? 'default' : 'pointer', background: isPast ? '#f3f4f6' : BLUE, color: isPast ? '#aaa' : YELLOW }}
             >
               {generating === ev.id ? 'Generating...' : active && !isExpired ? `🔄 Generate New Code` : isPast ? 'Past event' : `🔑 Generate Code (${minutes} min)`}
             </button>
@@ -147,10 +147,10 @@ function EventForm({ form, setForm, onSubmit, onCancel, saving, error, submitLab
       </div>
       {error && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{error}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+        <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer' }}>
           {saving ? 'Saving...' : submitLabel}
         </button>
-        <button type="button" onClick={onCancel} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+        <button type="button" onClick={onCancel} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer' }}>
           Cancel
         </button>
       </div>
@@ -224,7 +224,7 @@ function EventsTab({ events, onRefresh }) {
       {!creating && !editing && (
         <button
           onClick={() => { setCreating(true); setForm({ name: '', date: '', time: '', location: '', points: 50 }); setError('') }}
-          style={{ width: '100%', background: BLUE, color: YELLOW, border: 'none', borderRadius: 12, padding: '12px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer', marginBottom: 16 }}
+          style={{ width: '100%', background: BLUE, color: YELLOW, border: 'none', borderRadius: 12, padding: '12px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer', marginBottom: 16 }}
         >
           + New Event
         </button>
@@ -251,20 +251,20 @@ function EventsTab({ events, onRefresh }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{ev.name}</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>
+                  <div style={{ fontSize: 12, color: '#888', fontFamily: 'system-ui, sans-serif' }}>
                     {new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US')}{ev.time ? ` · ${ev.time}` : ''} · {ev.location} · {ev.points} pts
                   </div>
-                  <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{ev.checkins?.[0]?.count ?? 0} check-ins</div>
+                  <div style={{ fontSize: 12, color: '#888', marginTop: 2, fontFamily: 'system-ui, sans-serif' }}>{ev.checkins?.[0]?.count ?? 0} check-ins</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button onClick={() => loadCheckins(ev.id)} style={{ flex: 1, background: '#f3f4f6', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer', color: '#555' }}>
-                  {expanded === ev.id ? '▲ Hide Check-ins' : '▼ View Check-ins'}
+                <button onClick={() => loadCheckins(ev.id)} style={{ flex: 1, background: '#f3f4f6', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: 'system-ui, sans-serif', cursor: 'pointer', color: '#555' }}>
+                  {expanded === ev.id ? '▲ Ocultar' : '▼ Check-ins'}
                 </button>
-                <button onClick={() => startEdit(ev)} style={{ flex: 1, background: '#eff6ff', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer', color: BLUE }}>
+                <button onClick={() => startEdit(ev)} style={{ flex: 1, background: 'rgba(1,0,119,0.07)', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer', color: BLUE }}>
                   ✏️ Edit
                 </button>
-                <button onClick={() => deleteEvent(ev)} style={{ flex: 1, background: '#fef2f2', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer', color: '#dc2626' }}>
+                <button onClick={() => deleteEvent(ev)} style={{ flex: 1, background: '#fef2f2', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer', color: '#dc2626' }}>
                   🗑️ Delete
                 </button>
               </div>
@@ -307,10 +307,10 @@ function RewardForm({ form, setForm, onSubmit, onCancel, saving, error, submitLa
       </div>
       {error && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{error}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+        <button type="submit" disabled={saving} style={{ flex: 1, background: BLUE, color: YELLOW, border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer' }}>
           {saving ? 'Saving...' : submitLabel}
         </button>
-        <button type="button" onClick={onCancel} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+        <button type="button" onClick={onCancel} style={{ flex: 1, background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 600, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer' }}>
           Cancel
         </button>
       </div>
@@ -367,7 +367,7 @@ function RewardsTab() {
       {!creating && !editing && (
         <button
           onClick={() => { setCreating(true); setForm({ name: '', points_required: '', description: '' }); setError('') }}
-          style={{ width: '100%', background: BLUE, color: YELLOW, border: 'none', borderRadius: 12, padding: '12px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer', marginBottom: 16 }}
+          style={{ width: '100%', background: BLUE, color: YELLOW, border: 'none', borderRadius: 12, padding: '12px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer', marginBottom: 16 }}
         >
           + New Reward
         </button>
@@ -397,10 +397,10 @@ function RewardsTab() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button onClick={() => startEdit(r)} style={{ flex: 1, background: '#eff6ff', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer', color: BLUE }}>
+                <button onClick={() => startEdit(r)} style={{ flex: 1, background: 'rgba(1,0,119,0.07)', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer', color: BLUE }}>
                   ✏️ Edit
                 </button>
-                <button onClick={() => deleteReward(r)} style={{ flex: 1, background: '#fef2f2', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', sans-serif", cursor: 'pointer', color: '#dc2626' }}>
+                <button onClick={() => deleteReward(r)} style={{ flex: 1, background: '#fef2f2', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer', color: '#dc2626' }}>
                   🗑️ Delete
                 </button>
               </div>
@@ -471,13 +471,13 @@ function MembersTab() {
                     type="number"
                     value={editPts.value}
                     onChange={e => setEditPts(p => ({ ...p, value: e.target.value }))}
-                    style={{ width: 80, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '6px 8px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', sans-serif", outline: 'none' }}
+                    style={{ width: 80, border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '6px 8px', fontSize: 14, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", outline: 'none' }}
                     autoFocus
                   />
-                  <button onClick={() => savePoints(m)} disabled={saving} style={{ background: BLUE, color: YELLOW, border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+                  <button onClick={() => savePoints(m)} disabled={saving} style={{ background: BLUE, color: YELLOW, border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer' }}>
                     {saving ? '...' : '✓'}
                   </button>
-                  <button onClick={() => setEditPts(null)} style={{ background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins', sans-serif", cursor: 'pointer' }}>
+                  <button onClick={() => setEditPts(null)} style={{ background: '#f3f4f6', color: '#555', border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 700, fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer' }}>
                     ✕
                   </button>
                 </div>
@@ -497,7 +497,7 @@ function MembersTab() {
             disabled={m.id === user.id}
             style={{
               width: '100%', border: 'none', borderRadius: 8, padding: '8px',
-              fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', sans-serif",
+              fontSize: 12, fontWeight: 600, fontFamily: "'Poppins', system-ui, sans-serif",
               cursor: m.id === user.id ? 'default' : 'pointer',
               background: m.is_admin ? '#fef2f2' : '#f0fdf4',
               color: m.is_admin ? '#dc2626' : '#16a34a',
@@ -535,8 +535,8 @@ export default function AdminScreen() {
 
   return (
     <div className="screen-slide">
-      <div style={{ background: `linear-gradient(160deg, ${BLUE} 0%, #1a4a8a 100%)`, padding: '20px 20px 24px' }}>
-        <p style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>Admin Panel</p>
+      <div style={{ background: BLUE, padding: '20px 20px 24px' }}>
+        <p style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Admin Panel</p>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>Manage events and check-ins</p>
         <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
           {tabs.map(([id, label]) => (
@@ -545,7 +545,7 @@ export default function AdminScreen() {
               onClick={() => setView(id)}
               style={{
                 padding: '6px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600,
-                border: 'none', fontFamily: "'Poppins', sans-serif", cursor: 'pointer',
+                border: 'none', fontFamily: "'Poppins', system-ui, sans-serif", cursor: 'pointer',
                 background: view === id ? YELLOW : 'rgba(255,255,255,0.1)',
                 color: view === id ? BLUE : 'rgba(255,255,255,0.7)',
               }}

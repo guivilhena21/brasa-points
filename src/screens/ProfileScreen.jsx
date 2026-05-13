@@ -103,7 +103,7 @@ export default function ProfileScreen({ onTab }) {
                 <div className="prog-bar-bg">
                   <div
                     className="prog-bar-fill"
-                    style={{ width: `${pct}%`, background: done ? '#16a34a' : '#0F2D5E' }}
+                    style={{ width: `${pct}%`, background: done ? '#16a34a' : '#010077' }}
                   />
                 </div>
               </div>
