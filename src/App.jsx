@@ -1,11 +1,15 @@
+// App is the root component that decides whether to show the auth screen
+// or the main application shell depending on the authentication state.
 import { useAuth } from './hooks/useAuth'
 import AuthPage from './pages/AuthPage'
 import AppShell from './pages/AppShell'
 
 export default function App() {
+  // Get the current authenticated user from the auth hook.
   const { user } = useAuth()
 
-  // undefined = still loading session
+  // While Supabase is checking the user session, user is undefined.
+  // Show a loading screen during this state.
   if (user === undefined) {
     return (
       <div style={{
@@ -22,7 +26,9 @@ export default function App() {
     )
   }
 
+  // If there is no authenticated user, show the login/signup page.
   if (!user) return <AuthPage />
 
+  // Otherwise, show the main app shell for signed-in users.
   return <AppShell />
 }

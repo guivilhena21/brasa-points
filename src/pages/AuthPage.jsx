@@ -1,30 +1,53 @@
+// Import useState for local component state.
 import { useState } from 'react'
+// Import auth helpers from the custom auth hook.
 import { useAuth } from '../hooks/useAuth'
 
 export default function AuthPage() {
+  // Get sign-in and sign-up functions from auth context.
   const { signIn, signUp } = useAuth()
+
+  // mode keeps track of whether the form is in login or signup state.
   const [mode, setMode]     = useState('login') // 'login' | 'signup'
+
+  // Controlled form fields for the user's name, email, and password.
   const [name, setName]     = useState('')
   const [email, setEmail]   = useState('')
   const [password, setPass] = useState('')
+
+  // Error message to show feedback from auth calls.
   const [error, setError]   = useState('')
+  // Loading state used to disable the button while submitting.
   const [loading, setLoad]  = useState(false)
 
+  // Handle the form submission for login or signup.
   async function handleSubmit(e) {
+    // Prevent the browser from refreshing the page.
     e.preventDefault()
+    // Reset error before attempting auth.
     setError('')
+    // Show loading state while waiting for the request.
     setLoad(true)
     try {
       if (mode === 'login') {
+        // Attempt to sign in with email and password.
         const { error: err } = await signIn(email, password)
         if (err) setError(err.message)
       } else {
-        if (!name.trim()) { setError('Please enter your name.'); setLoad(false); return }
+        // Signup flow requires a name.
+        if (!name.trim()) {
+          setError('Please enter your name.')
+          setLoad(false)
+          return
+        }
+
+        // Attempt to sign up and pass the name in user metadata.
         const { error: err } = await signUp(email, password, name.trim())
         if (err) setError(err.message)
         else setError('Check your email to confirm your account!')
       }
     } finally {
+      // Stop loading state after request finishes.
       setLoad(false)
     }
   }
@@ -32,7 +55,7 @@ export default function AuthPage() {
   return (
     <div style={styles.bg}>
       <div style={styles.card}>
-        {/* Logo */}
+        {/* App logo at the top of the auth card. */}
         <div style={styles.logo}>
           <img src="/logo.png" alt="BRASA UCF" style={{ width: 72, height: 72, objectFit: 'contain' }} />
         </div>
@@ -40,9 +63,11 @@ export default function AuthPage() {
           <span style={styles.logoText}>BRASA UCF</span>
         </div>
 
+        {/* Title changes based on current auth mode. */}
         <h2 style={styles.title}>{mode === 'login' ? 'Sign In' : 'Create Account'}</h2>
 
         <form onSubmit={handleSubmit} style={styles.form}>
+          {/* Show the full name field only in signup mode. */}
           {mode === 'signup' && (
             <div style={styles.field}>
               <label style={styles.label}>Full name</label>
@@ -56,6 +81,8 @@ export default function AuthPage() {
               />
             </div>
           )}
+
+          {/* Email input field. */}
           <div style={styles.field}>
             <label style={styles.label}>Email</label>
             <input
@@ -67,6 +94,8 @@ export default function AuthPage() {
               required
             />
           </div>
+
+          {/* Password input field. */}
           <div style={styles.field}>
             <label style={styles.label}>Password</label>
             <input
@@ -80,22 +109,28 @@ export default function AuthPage() {
             />
           </div>
 
+          {/* Show error or success messages when present. */}
           {error && (
             <p style={{ ...styles.msg, color: error.includes('Check your email') ? '#16a34a' : '#dc2626' }}>
               {error}
             </p>
           )}
 
+          {/* Submit button changes text while loading and depending on mode. */}
           <button style={styles.btn} type="submit" disabled={loading}>
             {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
 
+        {/* Link to switch between login and signup modes. */}
         <p style={styles.switchText}>
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button
             style={styles.switchBtn}
-            onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}
+            onClick={() => {
+              setMode(mode === 'login' ? 'signup' : 'login')
+              setError('') // Clear any existing error when switching modes.
+            }}
           >
             {mode === 'login' ? 'Sign up' : 'Sign in'}
           </button>
@@ -105,6 +140,7 @@ export default function AuthPage() {
   )
 }
 
+// Inline style definitions used by the auth page.
 const styles = {
   bg: {
     minHeight: '100vh',

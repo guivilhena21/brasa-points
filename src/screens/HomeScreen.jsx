@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
+// Badge definitions used on the home screen.
 const BADGES = [
   { emoji: '🎉', name: '5 Events',   threshold: 5,   type: 'events' },
   { emoji: '⭐', name: 'Top 3',      threshold: 3,   type: 'rank'   },
   { emoji: '🤝', name: 'Connector',  threshold: 3,   type: 'events' },
-  { emoji: '🌱', name: 'Rookie',      threshold: 1,   type: 'events' },
+  { emoji: '🌱', name: 'Rookie',     threshold: 1,   type: 'events' },
   { emoji: '🤝', name: 'Ambassador', threshold: 10,  type: 'rank'   },
   { emoji: '🔥', name: '10 Events',  threshold: 10,  type: 'events' },
   { emoji: '🦁', name: 'OG Member',  threshold: 500, type: 'points' },
   { emoji: '🌟', name: 'BRASA MVP',  threshold: 1000, type: 'points'},
 ]
 
+// Determine which badges are unlocked based on profile data and rank.
 function getBadges(profile, rank) {
   return BADGES.map(b => {
     let unlocked = false
@@ -33,6 +35,7 @@ export default function HomeScreen({ onTab, onToast }) {
     async function load() {
       const today = new Date().toISOString().split('T')[0]
 
+      // Load upcoming events and leaderboard data in parallel.
       const [{ data: evData }, { data: board }] = await Promise.all([
         supabase
           .from('events')
@@ -49,6 +52,7 @@ export default function HomeScreen({ onTab, onToast }) {
       setEvents(evData ?? [])
 
       if (board && profile) {
+        // Determine the user's ranking position based on total points.
         const r = board.findIndex(p => p.id === profile.id) + 1
         setRank(r > 0 ? r : board.length + 1)
       }
@@ -63,7 +67,7 @@ export default function HomeScreen({ onTab, onToast }) {
 
   return (
     <div className="screen-slide">
-      {/* Hero */}
+      {/* Hero section showing welcome message, points, and rank */}
       <div className="home-hero">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div>
@@ -85,7 +89,7 @@ export default function HomeScreen({ onTab, onToast }) {
         </div>
       </div>
 
-      {/* Badges */}
+      {/* Badges section */}
       <div className="section-header">
         <span className="section-title">Your Badges</span>
         <span className="section-link" style={{ cursor: 'pointer' }} onClick={() => onTab('profile')}>
@@ -101,7 +105,7 @@ export default function HomeScreen({ onTab, onToast }) {
         ))}
       </div>
 
-      {/* Upcoming Events */}
+      {/* Upcoming events section */}
       <div className="section-header" style={{ marginTop: 8 }}>
         <span className="section-title">Upcoming Events</span>
         <span className="section-link" style={{ cursor: 'pointer' }} onClick={() => onTab('events')}>

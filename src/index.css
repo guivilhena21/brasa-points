@@ -1,4 +1,5 @@
 /* ── Fonts ── */
+/* These @font-face rules load custom fonts used across the app. */
 @font-face {
   font-family: 'CapturaNow';
   src: url('/fonts/Fontspring-DEMO-capturanow-light.otf') format('opentype');
@@ -43,6 +44,7 @@
 }
 
 /* ── Brand tokens ── */
+/* CSS variables for colors, fonts, and design tokens. */
 :root {
   --primary:       #010077;
   --primary-light: #2a20aa;
@@ -53,8 +55,10 @@
   --font-brand:    'Brasilero', system-ui, sans-serif;
 }
 
+/* Reset spacing and use border-box sizing everywhere. */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Set default font family for form controls. */
 input, select, textarea, button {
   font-family: var(--font-main);
 }
@@ -63,6 +67,7 @@ input[type="date"], input[type="number"], input[type="text"], input[type="email"
   text-transform: none;
 }
 
+/* Base page styles for body and app root. */
 body {
   background: #f3f4f6;
   min-height: 100vh;
@@ -79,6 +84,7 @@ body {
 }
 
 /* ── App shell ── */
+/* Main app container and scrolling content area. */
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -90,13 +96,14 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 82px;
+  padding-bottom: 82px; /* leave space for the bottom tab bar */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .screen-content::-webkit-scrollbar { display: none; }
 
 /* ── Tab bar ── */
+/* Fixed bottom nav bar with icon buttons. */
 .tab-bar {
   position: fixed;
   bottom: 0;
@@ -131,6 +138,7 @@ body {
 .tab-item:not(.active) .tab-label { color: #999; }
 
 /* ── Slide animation ── */
+/* Simple entry animation for screen transitions. */
 .screen-slide {
   animation: slideIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -337,6 +345,7 @@ body {
 .success-check { font-size: 64px; text-align: center; margin-bottom: 8px; }
 
 /* ── TOAST ── */
+/* Notification toast shown when the user earns points or performs an action. */
 .toast {
   position: fixed;
   top: 16px;

@@ -2,11 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
+// Badge definitions used in the profile screen.
 const BADGES = [
   { emoji: '🎉', name: '5 Events',  threshold: 5,    type: 'events' },
   { emoji: '⭐', name: 'Top 3',     threshold: 3,    type: 'rank'   },
   { emoji: '🤝', name: 'Connector', threshold: 3,    type: 'events' },
-  { emoji: '🌱', name: 'Rookie',      threshold: 1,   type: 'events' },
+  { emoji: '🌱', name: 'Rookie',    threshold: 1,    type: 'events' },
   { emoji: '🤝', name: 'Ambassador', threshold: 10,  type: 'rank'   },
   { emoji: '🔥', name: '10 Events', threshold: 10,   type: 'events' },
   { emoji: '🦁', name: 'OG Member', threshold: 500,  type: 'points' },
@@ -20,6 +21,7 @@ export default function ProfileScreen({ onTab }) {
   const [rewards, setRewards] = useState([])
 
   useEffect(() => {
+    // Load reward definitions once.
     supabase.from('rewards').select('*').order('points_required', { ascending: true })
       .then(({ data }) => setRewards(data ?? []))
   }, [])
@@ -27,6 +29,7 @@ export default function ProfileScreen({ onTab }) {
   useEffect(() => {
     if (!profile) return
     async function load() {
+      // Load recent check-in history and ranking data in parallel.
       const [{ data: hist }, { data: board }] = await Promise.all([
         supabase
           .from('checkins')
@@ -50,6 +53,7 @@ export default function ProfileScreen({ onTab }) {
 
   const initials = profile?.name?.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() ?? '?'
 
+  // Determine which badges are unlocked for the current user.
   const badges = BADGES.map(b => {
     let unlocked = false
     if (b.type === 'events' && profile?.events_attended >= b.threshold) unlocked = true
@@ -62,6 +66,7 @@ export default function ProfileScreen({ onTab }) {
 
   return (
     <div className="screen-slide">
+      {/* Profile hero section with avatar and user stats */}
       <div className="profile-hero">
         <div className="prof-avatar">{initials}</div>
         <div className="prof-name">{profile?.name}</div>
@@ -87,7 +92,7 @@ export default function ProfileScreen({ onTab }) {
       </div>
 
       <div className="profile-body">
-        {/* Rewards progress */}
+        {/* Rewards progress cards */}
         <div className="prof-card" style={{ marginTop: 16 }}>
           <div className="prof-card-title">Progress to Next Reward</div>
           {rewards.length === 0 && <p style={{ fontSize: 13, color: '#aaa' }}>No rewards configured yet.</p>}
@@ -111,7 +116,7 @@ export default function ProfileScreen({ onTab }) {
           })}
         </div>
 
-        {/* Badges */}
+        {/* Badge grid */}
         <div className="prof-card">
           <div className="prof-card-title">Badges</div>
           <div className="badges-grid">
@@ -124,7 +129,7 @@ export default function ProfileScreen({ onTab }) {
           </div>
         </div>
 
-        {/* Recent activity */}
+        {/* Recent check-in activity */}
         <div className="prof-card">
           <div className="prof-card-title">Recent Activity</div>
           {history.length === 0 && (
@@ -141,7 +146,7 @@ export default function ProfileScreen({ onTab }) {
           </div>
         </div>
 
-        {/* Sign out */}
+        {/* Sign out button */}
         <button
           onClick={signOut}
           style={{

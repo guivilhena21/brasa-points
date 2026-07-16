@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
-// ── Check-in bottom sheet ──────────────────────────────────────────────────
+// CheckinSheet is a modal that appears when the user opens an event.
+// It lets the user enter a code to confirm attendance and earn points.
 function CheckinSheet({ event, checkedIn, onClose, onSuccess }) {
   const { user, refreshProfile } = useAuth()
   const [code, setCode]     = useState('')
@@ -10,27 +11,43 @@ function CheckinSheet({ event, checkedIn, onClose, onSuccess }) {
   const [msg, setMsg]       = useState('')
   const [ptsEarned, setPts] = useState(0)
 
+  // Submit the event check-in code to the Supabase RPC function.
   async function submit(e) {
     e.preventDefault()
     if (!code.trim()) return
     setStatus('loading')
+
     const { data, error } = await supabase.rpc('process_checkin', {
       p_user_id:  user.id,
       p_event_id: event.id,
       p_code:     code.trim().toUpperCase(),
     })
-    if (error) { setStatus('error'); setMsg(error.message); return }
-    if (!data.success) { setStatus('error'); setMsg(data.error); return }
 
+    if (error) {
+      setStatus('error')
+      setMsg(error.message)
+      return
+    }
+
+    if (!data.success) {
+      setStatus('error')
+      setMsg(data.error)
+      return
+    }
+
+    // If successful, show the earned points and refresh the user's profile.
     setPts(data.points_earned)
     setStatus('success')
     await refreshProfile()
+
+    // Wait a short time so the success message is visible before closing.
     setTimeout(() => {
       onSuccess({ ...event, points_earned: data.points_earned })
       onClose()
     }, 1400)
   }
 
+  // If the user already checked in, show a simple confirmation modal.
   if (checkedIn) {
     return (
       <div className="modal-overlay" onClick={onClose}>
@@ -45,6 +62,7 @@ function CheckinSheet({ event, checkedIn, onClose, onSuccess }) {
     )
   }
 
+  // Otherwise show the check-in form or success state.
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={e => e.stopPropagation()}>
@@ -106,7 +124,7 @@ function CheckinSheet({ event, checkedIn, onClose, onSuccess }) {
   )
 }
 
-// ── Main Screen ────────────────────────────────────────────────────────────
+// Main Events screen shows upcoming events and handles check-in selection.
 export default function EventsScreen({ onToast }) {
   const { user } = useAuth()
   const [events, setEvents]       = useState([])
@@ -114,6 +132,7 @@ export default function EventsScreen({ onToast }) {
   const [selected, setSelected]   = useState(null)
   const [loading, setLoading]     = useState(true)
 
+  // Load all events and current user's check-ins.
   const load = useCallback(async () => {
     setLoading(true)
     const [{ data: evData }, { data: myCheckins }] = await Promise.all([
@@ -127,6 +146,7 @@ export default function EventsScreen({ onToast }) {
 
   useEffect(() => { load() }, [load])
 
+  // Handle successful check-in by marking the event checked in and showing a toast.
   function handleSuccess(data) {
     setCheckedIn(prev => new Set([...prev, data.id]))
     onToast(data)
@@ -208,6 +228,7 @@ export default function EventsScreen({ onToast }) {
         )}
       </div>
 
+      {/* Render the modal sheet when an event is selected. */}
       {selected && (
         <CheckinSheet
           event={selected}

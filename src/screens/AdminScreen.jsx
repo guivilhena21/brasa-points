@@ -1,10 +1,13 @@
+// Admin screen utilities: React hooks, Supabase client, and auth helper.
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 
+// Theme colors used across admin UI.
 const BLUE   = '#010077'
 const YELLOW = '#F5BD2C'
 
+// Generate a random 6-character alphanumeric code for check-in.
 function randomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
@@ -43,6 +46,7 @@ function Countdown({ expiresAt, totalMins = 20 }) {
 }
 
 // ── TAB: Check-in Codes ────────────────────────────────────────────────────
+// CodesTab lets admins generate temporary event check-in codes.
 function CodesTab({ events }) {
   const { user } = useAuth()
   const [activeCodes, setCodes] = useState({})
@@ -50,6 +54,7 @@ function CodesTab({ events }) {
   const [minutes, setMinutes]   = useState(20)
   const today = new Date().toISOString().split('T')[0]
 
+  // Generate a new check-in code for the selected event.
   async function generateCode(ev) {
     setGen(ev.id)
     const code      = randomCode()
@@ -120,6 +125,7 @@ function CodesTab({ events }) {
 }
 
 // ── Event Form (outside EventsTab to prevent remount on each keystroke) ────
+// Reusable event form for creating and editing events.
 function EventForm({ form, setForm, onSubmit, onCancel, saving, error, submitLabel }) {
   return (
     <form onSubmit={onSubmit} style={{ marginTop: 12 }}>
@@ -159,6 +165,7 @@ function EventForm({ form, setForm, onSubmit, onCancel, saving, error, submitLab
 }
 
 // ── TAB: Events ────────────────────────────────────────────────────────────
+// EventsTab allows admins to create, edit, delete, and inspect event check-ins.
 function EventsTab({ events, onRefresh }) {
   const [editing, setEditing]   = useState(null)
   const [expanded, setExpanded] = useState(null)
@@ -319,6 +326,7 @@ function RewardForm({ form, setForm, onSubmit, onCancel, saving, error, submitLa
 }
 
 // ── TAB: Rewards ───────────────────────────────────────────────────────────
+// RewardsTab manages reward definitions and allows admins to create/edit/delete rewards.
 function RewardsTab() {
   const [rewards, setRewards]   = useState([])
   const [editing, setEditing]   = useState(null)
@@ -413,6 +421,7 @@ function RewardsTab() {
 }
 
 // ── TAB: Members ───────────────────────────────────────────────────────────
+// MembersTab shows a list of users and allows admins to update points or admin status.
 function MembersTab() {
   const { user } = useAuth()
   const [members, setMembers] = useState([])
@@ -512,6 +521,7 @@ function MembersTab() {
 }
 
 // ── Main Admin Screen ──────────────────────────────────────────────────────
+// AdminScreen provides tabbed access to Codes, Events, Rewards, and Members tools.
 export default function AdminScreen() {
   const [view, setView]     = useState('codes')
   const [events, setEvents] = useState([])
