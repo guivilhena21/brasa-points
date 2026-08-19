@@ -1,11 +1,18 @@
+// App is the root component that decides whether to show the auth screen
+// or the main application shell depending on the authentication state.
 import { useAuth } from './hooks/useAuth'
 import AuthPage from './pages/AuthPage'
 import AppShell from './pages/AppShell'
 
 export default function App() {
+  // Get the current authenticated user from the auth hook.
   const { user } = useAuth()
 
-  // undefined = still loading session
+  // TEMPORARY DEV BYPASS: if enabled in localStorage, skip the login screen while developing.
+  // This is only for local development and should be removed before production release.
+  const devBypass = import.meta.env.DEV && localStorage.getItem('dev-bypass') === 'true'
+
+  // While Supabase is checking the user session, user is undefined.
   if (user === undefined) {
     return (
       <div style={{
@@ -22,7 +29,9 @@ export default function App() {
     )
   }
 
+  // The dev bypass still requires a real Supabase session for database writes.
   if (!user) return <AuthPage />
 
+  // Otherwise, show the main app shell for signed-in users.
   return <AppShell />
 }

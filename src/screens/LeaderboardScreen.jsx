@@ -1,3 +1,4 @@
+// Leaderboard screen displays top members sorted by points.
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'

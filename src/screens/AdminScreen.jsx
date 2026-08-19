@@ -1,10 +1,14 @@
+// Admin screen utilities: React hooks, Supabase client, and auth helper.
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { QRCodeSVG } from 'qrcode.react'
 
+// Theme colors used across admin UI.
 const BLUE   = '#010077'
 const YELLOW = '#F5BD2C'
 
+// Generate a random 6-character alphanumeric code for check-in.
 function randomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
@@ -43,6 +47,7 @@ function Countdown({ expiresAt, totalMins = 20 }) {
 }
 
 // ── TAB: Check-in Codes ────────────────────────────────────────────────────
+// CodesTab lets admins generate temporary event check-in codes.
 function CodesTab({ events }) {
   const { user } = useAuth()
   const [activeCodes, setCodes] = useState({})
@@ -50,14 +55,36 @@ function CodesTab({ events }) {
   const [minutes, setMinutes]   = useState(20)
   const today = new Date().toISOString().split('T')[0]
 
+  // Generate a new QR code for the selected event.
   async function generateCode(ev) {
     setGen(ev.id)
-    const code      = randomCode()
     const mins      = Math.max(1, Math.min(120, Number(minutes) || 20))
     const expiresAt = new Date(Date.now() + mins * 60 * 1000).toISOString()
-    const { error } = await supabase.from('checkin_codes').insert({ event_id: ev.id, code, created_by: user.id, expires_at: expiresAt })
+    
+    // Generate a unique QR token using the database function
+    const { data: tokenData, error: tokenError } = await supabase.rpc('generate_qr_token')
+    
+    if (tokenError || !tokenData) {
+      setGen(null)
+      alert('Error generating QR token: ' + (tokenError?.message || 'Unknown error'))
+      return
+    }
+    
+    const qrToken = tokenData
+    
+    // Insert into checkin_codes with the QR token
+    const { error } = await supabase.from('checkin_codes').insert({ 
+      event_id: ev.id, 
+      code: randomCode(), // Keep text code as fallback
+      qr_token: qrToken,
+      created_by: user.id, 
+      expires_at: expiresAt 
+    })
+    
     setGen(null)
-    if (!error) setCodes(prev => ({ ...prev, [ev.id]: { code, expiresAt, mins } }))
+    if (!error) {
+      setCodes(prev => ({ ...prev, [ev.id]: { code: qrToken, expiresAt, mins, isQR: true } }))
+    }
   }
 
   return (
@@ -93,24 +120,32 @@ function CodesTab({ events }) {
             {active && !isExpired ? (
               <div style={{ background: '#f0f9ff', borderRadius: 12, padding: 14, marginBottom: 10 }}>
                 <Countdown expiresAt={active.expiresAt} totalMins={active.mins ?? 20} />
-                <div
-                  style={{ fontSize: 32, fontWeight: 800, letterSpacing: 8, textAlign: 'center', color: BLUE, marginTop: 14, fontFamily: 'monospace', cursor: 'pointer' }}
-                  onClick={() => navigator.clipboard?.writeText(active.code)}
-                  title="Click to copy"
-                >
-                  {active.code}
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14, marginBottom: 10 }}>
+                  <QRCodeSVG 
+                    value={active.code} 
+                    size={180} 
+                    level="H" 
+                    includeMargin={true}
+                    fgColor={BLUE}
+                    bgColor="#fff"
+                  />
                 </div>
-                <p style={{ fontSize: 11, color: '#888', textAlign: 'center', marginTop: 6 }}>Click the code to copy · Share with members</p>
+                <p style={{ fontSize: 11, color: '#888', textAlign: 'center', marginTop: 6 }}>
+                  Share this QR code with event attendees
+                </p>
+                <p style={{ fontSize: 10, color: '#999', textAlign: 'center', marginTop: 4 }}>
+                  (Fallback: {active.code.slice(0, 8)}...)
+                </p>
               </div>
             ) : active && isExpired ? (
-              <p style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>⏰ Code expired.</p>
+              <p style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>⏰ QR code expired.</p>
             ) : null}
             <button
               onClick={() => generateCode(ev)}
               disabled={generating === ev.id || isPast}
               style={{ width: '100%', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, fontFamily: 'system-ui, sans-serif', cursor: isPast ? 'default' : 'pointer', background: isPast ? '#f3f4f6' : BLUE, color: isPast ? '#aaa' : YELLOW }}
             >
-              {generating === ev.id ? 'Generating...' : active && !isExpired ? `🔄 Generate New Code` : isPast ? 'Past event' : `🔑 Generate Code (${minutes} min)`}
+              {generating === ev.id ? 'Generating...' : active && !isExpired ? `🔄 Generate New QR` : isPast ? 'Past event' : `📱 Generate QR (${minutes} min)`}
             </button>
           </div>
         )
@@ -120,6 +155,7 @@ function CodesTab({ events }) {
 }
 
 // ── Event Form (outside EventsTab to prevent remount on each keystroke) ────
+// Reusable event form for creating and editing events.
 function EventForm({ form, setForm, onSubmit, onCancel, saving, error, submitLabel }) {
   return (
     <form onSubmit={onSubmit} style={{ marginTop: 12 }}>
@@ -159,6 +195,7 @@ function EventForm({ form, setForm, onSubmit, onCancel, saving, error, submitLab
 }
 
 // ── TAB: Events ────────────────────────────────────────────────────────────
+// EventsTab allows admins to create, edit, delete, and inspect event check-ins.
 function EventsTab({ events, onRefresh }) {
   const [editing, setEditing]   = useState(null)
   const [expanded, setExpanded] = useState(null)
@@ -319,6 +356,7 @@ function RewardForm({ form, setForm, onSubmit, onCancel, saving, error, submitLa
 }
 
 // ── TAB: Rewards ───────────────────────────────────────────────────────────
+// RewardsTab manages reward definitions and allows admins to create/edit/delete rewards.
 function RewardsTab() {
   const [rewards, setRewards]   = useState([])
   const [editing, setEditing]   = useState(null)
@@ -413,6 +451,7 @@ function RewardsTab() {
 }
 
 // ── TAB: Members ───────────────────────────────────────────────────────────
+// MembersTab shows a list of users and allows admins to update points or admin status.
 function MembersTab() {
   const { user } = useAuth()
   const [members, setMembers] = useState([])
@@ -512,6 +551,7 @@ function MembersTab() {
 }
 
 // ── Main Admin Screen ──────────────────────────────────────────────────────
+// AdminScreen provides tabbed access to Codes, Events, Rewards, and Members tools.
 export default function AdminScreen() {
   const [view, setView]     = useState('codes')
   const [events, setEvents] = useState([])
