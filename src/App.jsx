@@ -8,8 +8,11 @@ export default function App() {
   // Get the current authenticated user from the auth hook.
   const { user } = useAuth()
 
+  // TEMPORARY DEV BYPASS: if enabled in localStorage, skip the login screen while developing.
+  // This is only for local development and should be removed before production release.
+  const devBypass = import.meta.env.DEV && localStorage.getItem('dev-bypass') === 'true'
+
   // While Supabase is checking the user session, user is undefined.
-  // Show a loading screen during this state.
   if (user === undefined) {
     return (
       <div style={{
@@ -26,7 +29,7 @@ export default function App() {
     )
   }
 
-  // If there is no authenticated user, show the login/signup page.
+  // The dev bypass still requires a real Supabase session for database writes.
   if (!user) return <AuthPage />
 
   // Otherwise, show the main app shell for signed-in users.

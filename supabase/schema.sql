@@ -58,26 +58,44 @@ ALTER TABLE checkin_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE checkins     ENABLE ROW LEVEL SECURITY;
 
 -- profiles: any authenticated user can read; only own row to insert/update
+DROP POLICY IF EXISTS "profiles_select" ON profiles;
 CREATE POLICY "profiles_select"  ON profiles FOR SELECT TO authenticated USING (TRUE);
+
+DROP POLICY IF EXISTS "profiles_insert" ON profiles;
 CREATE POLICY "profiles_insert"  ON profiles FOR INSERT TO authenticated WITH CHECK (id = auth.uid());
+
+DROP POLICY IF EXISTS "profiles_update" ON profiles;
 CREATE POLICY "profiles_update"  ON profiles FOR UPDATE TO authenticated USING (id = auth.uid());
 
 -- events: any authenticated user can read; only admins can insert/update/delete
+DROP POLICY IF EXISTS "events_select" ON events;
 CREATE POLICY "events_select"  ON events FOR SELECT  TO authenticated USING (TRUE);
+
+DROP POLICY IF EXISTS "events_insert" ON events;
 CREATE POLICY "events_insert"  ON events FOR INSERT  TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin));
+
+DROP POLICY IF EXISTS "events_update" ON events;
 CREATE POLICY "events_update"  ON events FOR UPDATE  TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin));
+
+DROP POLICY IF EXISTS "events_delete" ON events;
 CREATE POLICY "events_delete"  ON events FOR DELETE  TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin));
 
 -- checkin_codes: authenticated users can read (needed to display countdown); admins insert
+DROP POLICY IF EXISTS "codes_select" ON checkin_codes;
 CREATE POLICY "codes_select" ON checkin_codes FOR SELECT TO authenticated USING (TRUE);
+
+DROP POLICY IF EXISTS "codes_insert" ON checkin_codes;
 CREATE POLICY "codes_insert" ON checkin_codes FOR INSERT TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin));
 
 -- checkins: any authenticated user can read (leaderboard); insert own row only
+DROP POLICY IF EXISTS "checkins_select" ON checkins;
 CREATE POLICY "checkins_select" ON checkins FOR SELECT TO authenticated USING (TRUE);
+
+DROP POLICY IF EXISTS "checkins_insert" ON checkins;
 CREATE POLICY "checkins_insert" ON checkins FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
 

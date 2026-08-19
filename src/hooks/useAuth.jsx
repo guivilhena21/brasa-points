@@ -7,14 +7,68 @@ import { supabase } from '../lib/supabase'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
+  const devBypass = import.meta.env.DEV && localStorage.getItem('dev-bypass') === 'true'
+
   // Track the current signed-in user.
   // undefined means we are still loading auth state;
   // null means no user is signed in.
-  const [user, setUser]       = useState(undefined)
+  const [user, setUser] = useState(undefined)
   // Store the user's profile data loaded from the profiles table.
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
+    if (devBypass) {
+      let cancelled = false
+
+      async function bootstrapDevBypass() {
+        try {
+          // Use a real authenticated user in dev so RLS-protected writes work.
+          const { data: sessionData } = await supabase.auth.getSession()
+          let activeUser = sessionData.session?.user ?? null
+
+          if (!activeUser) {
+            const { data, error } = await supabase.auth.signInAnonymously()
+            if (error) {
+              setUser(null)
+              setProfile(null)
+              return
+            }
+            activeUser = data.user
+          }
+
+          if (!activeUser || cancelled) return
+
+          setUser(activeUser)
+
+          // Ensure a profile exists for the dev user and elevate admin in dev mode.
+          await supabase
+            .from('profiles')
+            .upsert(
+              {
+                id: activeUser.id,
+                name: 'Dev User',
+                role: 'Member',
+                total_points: 500,
+                events_attended: 3,
+                is_admin: true,
+              },
+              { onConflict: 'id' }
+            )
+
+          await supabase.from('profiles').update({ is_admin: true }).eq('id', activeUser.id)
+          await fetchProfile(activeUser.id)
+        } catch {
+          setUser(null)
+          setProfile(null)
+        }
+      }
+
+      bootstrapDevBypass()
+      return () => {
+        cancelled = true
+      }
+    }
+
     // On mount, check whether there is an active auth session.
     supabase.auth.getSession().then(({ data }) => {
       // If a session exists, set user to the authenticated user object.
@@ -39,7 +93,7 @@ export function AuthProvider({ children }) {
 
     // Cleanup subscription when the provider unmounts.
     return () => subscription.unsubscribe()
-  }, [])
+  }, [devBypass])
 
   // Load profile data for the given user ID from the profiles table.
   async function fetchProfile(uid) {
@@ -60,17 +114,35 @@ export function AuthProvider({ children }) {
 
   // Sign up a new user with email and password, and attach a name field.
   async function signUp(email, password, name) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    })
-    return { data, error }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } },
+      })
+      return { data, error }
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          message: error?.message || 'Unable to create your account. Check your internet connection or Supabase settings.',
+        },
+      }
+    }
   }
 
   // Sign in an existing user using email and password.
   async function signIn(email, password) {
-    return supabase.auth.signInWithPassword({ email, password })
+    try {
+      return await supabase.auth.signInWithPassword({ email, password })
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          message: error?.message || 'Unable to sign in. Check your internet connection or Supabase settings.',
+        },
+      }
+    }
   }
 
   // Sign out the current user.

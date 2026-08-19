@@ -46,6 +46,8 @@ export default function AuthPage() {
         if (err) setError(err.message)
         else setError('Check your email to confirm your account!')
       }
+    } catch (err) {
+      setError(err?.message || 'Unable to connect to the authentication service.')
     } finally {
       // Stop loading state after request finishes.
       setLoad(false)
