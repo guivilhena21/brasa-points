@@ -145,6 +145,7 @@ function CodesTab({ events }) {
               disabled={generating === ev.id || isPast}
               style={{ width: '100%', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, fontFamily: 'system-ui, sans-serif', cursor: isPast ? 'default' : 'pointer', background: isPast ? '#f3f4f6' : BLUE, color: isPast ? '#aaa' : YELLOW }}
             >
+              {/* QR check-in system update */}
               {generating === ev.id ? 'Generating...' : active && !isExpired ? `🔄 Generate New QR` : isPast ? 'Past event' : `📱 Generate QR (${minutes} min)`}
             </button>
           </div>
