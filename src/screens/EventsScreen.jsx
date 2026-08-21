@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { Html5QrcodeScanner } from 'html5-qrcode'
+import { normalizeQRToken } from '../lib/qr'
 
 // CheckinSheet is a modal that appears when the user opens an event.
 // It lets the user scan a QR code to confirm attendance and earn points.
@@ -49,11 +50,21 @@ function CheckinSheet({ event, checkedIn, onClose, onSuccess }) {
 
   // Submit the QR token to the Supabase RPC function.
   async function processQRToken(qrToken) {
+    const normalizedToken = normalizeQRToken(qrToken)
+    if (!normalizedToken) {
+      setStatus('error')
+      setMsg('Invalid QR code. Ask an organizer for a new one.')
+      if (scannerInstanceRef.current) {
+        scannerInstanceRef.current.resume()
+      }
+      return
+    }
+
     setStatus('loading')
 
     const { data, error } = await supabase.rpc('process_qr_checkin', {
       p_user_id: user.id,
-      p_qr_token: qrToken.trim(),
+      p_qr_token: normalizedToken,
     })
 
     if (error) {

@@ -3,10 +3,29 @@
 import { useAuth } from './hooks/useAuth'
 import AuthPage from './pages/AuthPage'
 import AppShell from './pages/AppShell'
+import CheckinPage from './pages/CheckinPage'
+import { getQRTokenFromCurrentUrl } from './lib/qr'
+
+function isCheckinPath() {
+  if (typeof window === 'undefined') return false
+
+  const basePath = import.meta.env.BASE_URL || '/'
+  const normalizedBase = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+  const currentPath = window.location.pathname.replace(/\/+$/, '')
+  const relativePath = normalizedBase && normalizedBase !== '/'
+    ? currentPath.startsWith(normalizedBase)
+      ? currentPath.slice(normalizedBase.length) || '/'
+      : currentPath
+    : currentPath
+
+  return relativePath === '/checkin'
+}
 
 export default function App() {
   // Get the current authenticated user from the auth hook.
   const { user } = useAuth()
+  const checkinPath = isCheckinPath()
+  const qrToken = checkinPath ? getQRTokenFromCurrentUrl() : ''
 
   // TEMPORARY DEV BYPASS: if enabled in localStorage, skip the login screen while developing.
   // This is only for local development and should be removed before production release.
@@ -27,6 +46,11 @@ export default function App() {
         </div>
       </div>
     )
+  }
+
+  if (checkinPath) {
+    if (!user) return <AuthPage heading="Sign In To Complete Check-In" />
+    return <CheckinPage token={qrToken} />
   }
 
   // The dev bypass still requires a real Supabase session for database writes.

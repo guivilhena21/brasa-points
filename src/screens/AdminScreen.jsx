@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { QRCodeSVG } from 'qrcode.react'
+import { buildCheckinUrl, normalizeQRToken } from '../lib/qr'
 
 // Theme colors used across admin UI.
 const BLUE   = '#010077'
@@ -14,6 +15,7 @@ function randomCode() {
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
 }
 
+// Accept plain tokens and legacy URL payloads, then extract just the token.
 const inputStyle = {
   width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10,
   padding: '10px 12px', fontSize: 14, fontFamily: "'Poppins', system-ui, sans-serif", outline: 'none',
@@ -70,7 +72,12 @@ function CodesTab({ events }) {
       return
     }
     
-    const qrToken = tokenData
+    const qrToken = normalizeQRToken(tokenData)
+    if (!qrToken) {
+      setGen(null)
+      alert('Error generating QR token: invalid token payload from server')
+      return
+    }
     
     // Insert into checkin_codes with the QR token
     const { error } = await supabase.from('checkin_codes').insert({ 
@@ -122,7 +129,7 @@ function CodesTab({ events }) {
                 <Countdown expiresAt={active.expiresAt} totalMins={active.mins ?? 20} />
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14, marginBottom: 10 }}>
                   <QRCodeSVG 
-                    value={active.code} 
+                    value={buildCheckinUrl(active.code) || active.code}
                     size={180} 
                     level="H" 
                     includeMargin={true}

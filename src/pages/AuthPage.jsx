@@ -3,7 +3,7 @@ import { useState } from 'react'
 // Import auth helpers from the custom auth hook.
 import { useAuth } from '../hooks/useAuth'
 
-export default function AuthPage() {
+export default function AuthPage({ heading }) {
   // Get sign-in and sign-up functions from auth context.
   const { signIn, signUp } = useAuth()
 
@@ -66,7 +66,7 @@ export default function AuthPage() {
         </div>
 
         {/* Title changes based on current auth mode. */}
-        <h2 style={styles.title}>{mode === 'login' ? 'Sign In' : 'Create Account'}</h2>
+        <h2 style={styles.title}>{heading || (mode === 'login' ? 'Sign In' : 'Create Account')}</h2>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           {/* Show the full name field only in signup mode. */}
